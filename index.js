@@ -2,19 +2,14 @@ const mineflayer = require('mineflayer')
 const express = require('express')
 const http = require('http')
 const socketio = require('socket.io')
-
-// --- FIX START ---
-// Change the import from 'mineflayer-viewer' to 'prismarine-viewer'
-// and destructure the 'mineflayer' property, which contains the viewer function
-const { mineflayer: mineflayerViewer } = require('prismarine-viewer') 
-// --- FIX END ---
+const { viewer } = require('prismarine-viewer') // Using prismarine-viewer
 
 // --- WEB SERVER SETUP ---
 const app = express()
 const server = http.createServer(app)
 const io = socketio(server)
-const PORT = process.env.PORT || 3000 // Use environment variable for hosting
-const VIEWER_PORT = 3007 // Port for Bot POV Viewer
+const PORT = process.env.PORT || 3000 // Render uses this env variable
+const VIEWER_PORT = 3007 // Port for Bot POV Viewer (For local use or separate Render service)
 
 // Serve the 'public' folder for the front-end files
 app.use(express.static('public'))
@@ -35,9 +30,8 @@ function createBot () {
 
     // --- BOT VIEWER INITIALIZATION ---
     bot.once('spawn', () => {
-        // Initialize the viewer using the correctly imported function 'mineflayerViewer'
-        // This function expects the bot instance and the options
-        mineflayerViewer(bot, { port: VIEWER_PORT, firstPerson: true }) // <-- Function name changed
+        // Initialize the viewer. This will open on port 3007.
+        viewer(bot, { port: VIEWER_PORT, firstPerson: true }) 
         
         console.log(`Bot Viewer available at http://localhost:${VIEWER_PORT}`)
         io.emit('bot_log', `Bot Viewer initialized. Access at http://localhost:${VIEWER_PORT}`)
@@ -60,7 +54,6 @@ function createBot () {
         console.log('A web client connected.')
         io.emit('bot_log', 'Web client connected. You can now send commands.')
 
-        // Listener for chat commands from the web client
         socket.on('send_chat_command', (message) => {
             console.log(`Received command from web: CHAT - ${message}`)
             if (bot.chat) {
@@ -71,7 +64,6 @@ function createBot () {
             }
         })
         
-        // Listener for movement/control commands
         socket.on('send_control_command', ({ control, state }) => {
             console.log(`Received command from web: CONTROL - ${control}: ${state}`)
             if (bot.setControlState) {
@@ -88,16 +80,18 @@ function createBot () {
         })
     })
 
-    // --- ORIGINAL MOVEMENT CODE (COMMENTED OUT TO PREVENT CONFLICTS) ---
-    /* bot.on("move", function() {
+    // --- ORIGINAL MOVEMENT CODE (COMMENTED OUT) ---
+    /* //NO TOCAR/// DO NOT TOUCH
+    bot.on("move", function() {
         //triggers when the bot moves
         //DONT MODIFY THE CODE, THIS CODE WAS CREATED BY AAG OP (YOUTUBE AAG OP). READ THE LICENSE.
 
         bot.setControlState("jump", true); //continuously jumps
         setTimeout(() => {
+            //sets a delay
             bot.setControlState("jump", false); //stops jumping
-        }, 1000); 
-        //... rest of the original movement logic is here ...
+        }, 1000); //delay time
+        //... the rest of the original continuous movement logic is commented out here ...
     });
     //DONT MODIFY THE CODE, THIS CODE WAS CREATED BY AAG OP (YOUTUBE AAG OP). READ THE LICENSE.
     */
