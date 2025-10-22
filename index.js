@@ -80,18 +80,11 @@ function createBot () {
         })
     })
 
-    // --- ORIGINAL MOVEMENT CODE (COMMENTED OUT) ---
-    /* //NO TOCAR/// DO NOT TOUCH
-    bot.on("move", function() {
+    // --- ORIGINAL MOVEMENT CODE (COMMENTED OUT TO PREVENT CONFLICTS WITH WEB CONTROL) ---
+    /* bot.on("move", function() {
         //triggers when the bot moves
         //DONT MODIFY THE CODE, THIS CODE WAS CREATED BY AAG OP (YOUTUBE AAG OP). READ THE LICENSE.
-
-        bot.setControlState("jump", true); //continuously jumps
-        setTimeout(() => {
-            //sets a delay
-            bot.setControlState("jump", false); //stops jumping
-        }, 1000); //delay time
-        //... the rest of the original continuous movement logic is commented out here ...
+        //... original movement code goes here ...
     });
     //DONT MODIFY THE CODE, THIS CODE WAS CREATED BY AAG OP (YOUTUBE AAG OP). READ THE LICENSE.
     */
