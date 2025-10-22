@@ -4,8 +4,7 @@
   "description": "Script para controlar un bot de Minecraft",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "preinstall": "npm install --global npm@latest && apt-get update && apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev"
+    "start": "node index.js"
   },
   "author": "Jin",
   "license": "GPL-3.0",
