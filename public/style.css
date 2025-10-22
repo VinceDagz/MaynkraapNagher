@@ -181,3 +181,33 @@ button:hover {
 #log li:first-child {
     color: #ffff00;
 }
+
+/* ... (Keep all existing CSS) ... */
+
+/* NEW: Anti-Idle Button Style */
+.anti-idle-btn {
+    margin-top: 15px;
+    width: 100%;
+    background-color: #7b00ff; /* Purple for a distinct look */
+}
+
+.anti-idle-btn:hover {
+    background-color: #a500ff;
+    box-shadow: 0 0 10px #a500ff;
+}
+
+.anti-idle-btn.active {
+    background-color: #00ffff; /* Cyber Blue when active */
+    color: #000;
+    font-weight: bold;
+    box-shadow: 0 0 15px #00ffff, 0 0 5px #ff007f inset; /* Neon glow */
+}
+
+.anti-idle-btn.active:hover {
+    background-color: #ff007f; /* Pink on hover when active */
+    color: #fff;
+    box-shadow: 0 0 15px #ff007f, 0 0 5px #00ffff inset;
+}
+
+/* Log Section */
+/* ... (Keep all existing Log Section CSS) ... */
