@@ -2,7 +2,12 @@ const mineflayer = require('mineflayer')
 const express = require('express')
 const http = require('http')
 const socketio = require('socket.io')
-const { viewer } = require('mineflayer-viewer') 
+
+// --- FIX START ---
+// Change the import from 'mineflayer-viewer' to 'prismarine-viewer'
+// and destructure the 'mineflayer' property, which contains the viewer function
+const { mineflayer: mineflayerViewer } = require('prismarine-viewer') 
+// --- FIX END ---
 
 // --- WEB SERVER SETUP ---
 const app = express()
@@ -30,8 +35,9 @@ function createBot () {
 
     // --- BOT VIEWER INITIALIZATION ---
     bot.once('spawn', () => {
-        // Initialize the viewer
-        viewer(bot, { port: VIEWER_PORT, firstPerson: true }) 
+        // Initialize the viewer using the correctly imported function 'mineflayerViewer'
+        // This function expects the bot instance and the options
+        mineflayerViewer(bot, { port: VIEWER_PORT, firstPerson: true }) // <-- Function name changed
         
         console.log(`Bot Viewer available at http://localhost:${VIEWER_PORT}`)
         io.emit('bot_log', `Bot Viewer initialized. Access at http://localhost:${VIEWER_PORT}`)
