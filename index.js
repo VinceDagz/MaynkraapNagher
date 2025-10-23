@@ -14,7 +14,7 @@ const BOT_BRAND_NAME = 'AriSxZeBot';
 const CREATED_BY = 'Arisxze';
 const INITIAL_BOT_COUNT = 1;
 const BOT_SERVER_SETTINGS = {
-    host: '143.44.165.75', //SERVER HOSTNAME TO IP
+    host: '185.107.192.61', //SERVER HOSTNAME TO IP
     port: 14282, //PORT OF THE SERVER IN ATERNOS
     version: '1.16.5',
     protocolVersion: 754,
