@@ -1,292 +1,287 @@
-const mineflayer = require('mineflayer')
-const express = require('express')
-const http = require('http')
-const socketio = require('socket.io')
+// ============================================================
+// 🟣 AriSxZe Bot by Arisxze
+// Advanced Minecraft Automation & Web Control Interface
+// Built with ❤️ by Arisxze
+// ============================================================
 
-// --- CONFIGURATION ---
-const BOT_BASE_NAME = 'WaguriKaoruko';
-const STARTING_BOT_COUNT = 3; // The number of bots to start with, but not a limit.
-const BOT_SERVER_CONFIG = {
-    host: 'arisxze.aternos.me', 
-    port: 31729, 
-    version: '1.16.5'
+const mineflayer = require('mineflayer');
+const express = require('express');
+const http = require('http');
+const socketio = require('socket.io');
+
+// --- ⚙️ CONFIGURATION ---
+const BOT_BRAND_NAME = 'AriSxZeBot';
+const CREATED_BY = 'Arisxze';
+const INITIAL_BOT_COUNT = 1;
+const BOT_SERVER_SETTINGS = {
+    host: '185.107.194.163', //SERVER HOSTNAME TO IP
+    port: 14282, //PORT OF THE SERVER IN ATERNOS
+    version: '1.16.5',
+    protocolVersion: 754,
+    // Important for Aternos or proxy-based setups
+    serverHost: 'congratsngger.aternos.me' //HOSTNAME OF THE ATERNOS SERVER
 };
+const START_DELAY_MS = 3000;
 const PORT = process.env.PORT || 3000;
 // --- END CONFIGURATION ---
 
 
-// --- GLOBAL STATE ---
-// This counter tracks the next sequential number for bot names (e.g., _4, _5, _6...)
-let globalBotCounter = 1; 
-// NEW: Tracks how many bots have been replaced (banned/kicked)
-let bannedBotCount = 0; 
+// --- 🌐 GLOBAL STATE ---
+let botCounter = 1;
+let totalBanned = 0;
 const activeBots = [];
 // --- END GLOBAL STATE ---
 
 
-// --- WEB SERVER SETUP ---
-const app = express()
-const server = http.createServer(app)
-const io = socketio(server)
+// --- 🌍 WEB SERVER SETUP ---
+const app = express();
+const server = http.createServer(app);
+const io = socketio(server);
 
-app.use(express.static('public'))
+app.use(express.static('public'));
 
 server.listen(PORT, () => {
-    console.log(`Web interface running on http://localhost:${PORT}`)
-})
+    console.log(`🟢 AriSxZe Control Panel running at: http://localhost:${PORT}`);
+});
 
 
-// Helper to find a bot by its username
-const getBot = (username) => activeBots.find(b => b.username === username);
+// --- 🔍 HELPER FUNCTIONS ---
+const findBot = (username) => activeBots.find(b => b.username === username);
 
-// Function to update the bot list AND the counter on the client
-function sendBotListUpdate() {
-    const botUsernames = activeBots.map(b => b.username);
+function updateClientBotList() {
+    const botNames = activeBots.map(b => b.username);
     io.emit('bot_list', {
-        usernames: botUsernames,
-        bannedCount: bannedBotCount // Send the updated ban count
+        usernames: botNames,
+        bannedCount: totalBanned
     });
 }
+// --- END HELPERS ---
 
-// --- BOT LOGIC FUNCTIONS (Encapsulated) ---
 
-// Function to handle bot creation and manage its state
-function createBot(config) {
-    const bot = mineflayer.createBot(config);
+// --- 🤖 BOT CREATION FUNCTION ---
+function createAriSxZeBot(config) {
+    const fullConfig = {
+        ...config,
+        auth: 'offline',
+        keepAlive: true
+    };
 
-    // State variables for THIS specific bot instance
-    let antiIdleInterval = null; 
-    let movementTimeouts = []; 
-    let isAntiIdleActive = false;
-    
-    // Helper function to clear all movement-related timers
-    function clearMovementTimeouts() {
-        movementTimeouts.forEach(timer => clearTimeout(timer));
-        movementTimeouts = []; 
+    const bot = mineflayer.createBot(fullConfig);
+
+    let antiIdleInterval = null;
+    let movementTimers = [];
+    let antiIdleActive = false;
+
+    function clearMovementTimers() {
+        movementTimers.forEach(timer => clearTimeout(timer));
+        movementTimers = [];
     }
 
-    // Function to perform anti-idle movement (same as before)
-    function performAntiIdleMovement() {
-        if (!bot.setControlState || !bot.look || !isAntiIdleActive) {
-            clearMovementTimeouts(); 
+    function performAntiIdleMotion() {
+        if (!bot.setControlState || !bot.look || !antiIdleActive) {
+            clearMovementTimers();
             return;
         }
-        
+
         bot.setControlState('forward', false);
         bot.setControlState('jump', false);
-        
-        const scheduleTimeout = (callback, delay) => {
-            const timerId = setTimeout(() => {
-                if (isAntiIdleActive) {
-                    callback();
-                }
-                movementTimeouts = movementTimeouts.filter(id => id !== timerId);
+
+        const addTimer = (callback, delay) => {
+            const timer = setTimeout(() => {
+                if (antiIdleActive) callback();
+                movementTimers = movementTimers.filter(t => t !== timer);
             }, delay);
-            movementTimeouts.push(timerId);
-            return timerId;
+            movementTimers.push(timer);
+            return timer;
         };
 
-        // Anti-Idle movement sequence
+        // Randomized movement to prevent AFK kicks
         bot.setControlState('forward', true);
         bot.setControlState('jump', true);
-        scheduleTimeout(() => {
+        addTimer(() => {
             bot.setControlState('forward', false);
             bot.setControlState('jump', false);
         }, 3000);
 
-        scheduleTimeout(() => {
-            const randomYaw = bot.entity.yaw + (Math.PI / 2 * (Math.random() < 0.5 ? 1 : -1)) + (Math.random() * Math.PI / 4 - Math.PI / 8);
-            bot.look(randomYaw, 0, true); 
+        addTimer(() => {
+            const yawChange = bot.entity.yaw + (Math.PI / 2 * (Math.random() < 0.5 ? 1 : -1)) + (Math.random() * Math.PI / 4 - Math.PI / 8);
+            bot.look(yawChange, 0, true);
         }, 3500);
 
-        scheduleTimeout(() => {
+        addTimer(() => {
             bot.setControlState('forward', true);
             bot.setControlState('jump', true);
-            scheduleTimeout(() => bot.setControlState('jump', false), 200); 
+            addTimer(() => bot.setControlState('jump', false), 200);
         }, 6000);
 
-        scheduleTimeout(() => {
+        addTimer(() => {
             bot.setControlState('forward', false);
             bot.setControlState('back', false);
             bot.setControlState('left', false);
             bot.setControlState('right', false);
-            io.emit('bot_log', `[${bot.username}]: Anti-Idle: Sequence complete.`);
+            io.emit('bot_log', `[${bot.username}]: 🌀 Anti-Idle motion complete.`);
         }, 9000);
     }
-    
+
     function startAntiIdle() {
-        if (antiIdleInterval) return; 
-        isAntiIdleActive = true; 
-        performAntiIdleMovement();
-        antiIdleInterval = setInterval(performAntiIdleMovement, 15000);
-        io.emit('bot_log', `[${bot.username}]: Anti-Idle feature STARTED.`);
+        if (antiIdleInterval) return;
+        antiIdleActive = true;
+        performAntiIdleMotion();
+        antiIdleInterval = setInterval(performAntiIdleMotion, 15000);
+        io.emit('bot_log', `[${bot.username}]: 🟣 Anti-Idle activated.`);
     }
 
     function stopAntiIdle() {
         if (antiIdleInterval) {
             clearInterval(antiIdleInterval);
             antiIdleInterval = null;
-            clearMovementTimeouts(); 
+            clearMovementTimers();
             if (bot.setControlState) {
-                bot.setControlState('forward', false);
-                bot.setControlState('back', false);
-                bot.setControlState('left', false);
-                bot.setControlState('right', false);
-                bot.setControlState('jump', false);
+                ['forward', 'back', 'left', 'right', 'jump'].forEach(c => bot.setControlState(c, false));
             }
-            isAntiIdleActive = false; 
-            io.emit('bot_log', `[${bot.username}]: Anti-Idle feature STOPPED.`);
+            antiIdleActive = false;
+            io.emit('bot_log', `[${bot.username}]: 🔴 Anti-Idle deactivated.`);
         }
     }
-    
-    // --- BOT EVENT HANDLERS ---
-    
+
+    // --- 🎧 BOT EVENTS ---
+
     bot.on('spawn', () => {
-        const message = `${bot.username} connected!`
-        bot.chat(message)
-        io.emit('bot_log', `[${bot.username}]: Bot spawned and chatted: "${message}"`)
-        sendBotListUpdate();
+        const joinMsg = `[${BOT_BRAND_NAME}] ${bot.username} online!`;
+        bot.chat(joinMsg);
+        io.emit('bot_log', `[${bot.username}]: ✅ Connected and greeted the server.`);
+        updateClientBotList();
     });
 
     bot.on('chat', (username, message) => {
-        const chatLog = `[${bot.username} <== ${username}]: ${message}`
-        console.log(chatLog)
-        io.emit('bot_log', chatLog)
+        const logMsg = `[${bot.username} <== ${username}]: ${message}`;
+        console.log(logMsg);
+        io.emit('bot_log', logMsg);
     });
-    
+
     bot.on('kicked', (reason) => {
-        io.emit('bot_log', `[${bot.username}]: KICKED - ${reason}. Initiating name re-roll.`);
-        console.log(`[${bot.username}]: KICKED - ${reason}. Initiating name re-roll.`);
-        
-        // When a bot is kicked, we assume it needs replacing
-        bannedBotCount++; // Increment the global counter
+        const reasonText = typeof reason === 'object' ? JSON.stringify(reason) : reason.toString();
+        io.emit('bot_log', `[${bot.username}]: ❌ KICKED - ${reasonText}. Replacing soon...`);
+        totalBanned++;
     });
-    
+
     bot.on('error', (err) => {
-        io.emit('bot_log', `[${bot.username}]: ERROR - ${err.message}`);
-        console.log(`[${bot.username}]: ERROR - ${err.message}`);
+        io.emit('bot_log', `[${bot.username}]: ⚠️ ERROR - ${err.message}`);
+        console.error(`[${bot.username}]: ERROR - ${err.message}`);
     });
-    
-    bot.on('end', () => {
-        const oldUsername = bot.username;
-        stopAntiIdle(); 
-        
-        // 1. Remove the old bot from the active list
-        const index = activeBots.findIndex(b => b.username === oldUsername);
-        if (index > -1) {
-            activeBots.splice(index, 1);
-        }
-        
-        io.emit('bot_log', `[${oldUsername}]: Ended. Creating replacement bot...`);
 
-        // 2. Immediately create a new bot with the next available number
-        recreateBot(oldUsername);
+    bot.on('end', (reason) => {
+        const name = bot.username;
+        stopAntiIdle();
 
-        // 3. Update the client UI
-        sendBotListUpdate();
+        const index = activeBots.findIndex(b => b.username === name);
+        if (index > -1) activeBots.splice(index, 1);
+
+        io.emit('bot_log', `[${name}]: Disconnected (${reason}). Rebooting replacement bot...`);
+        respawnBot(name);
+        updateClientBotList();
     });
-    // --- END BOT EVENT HANDLERS ---
 
     bot.antiIdle = {
         start: startAntiIdle,
         stop: stopAntiIdle,
-        isActive: () => isAntiIdleActive
+        isActive: () => antiIdleActive
     };
-    
+
     return bot;
 }
-
-// --- RE-CREATION LOGIC ---
-function recreateBot(oldUsername) {
-    // There is no limit here; it will always increment and create a new bot.
-    const newUsername = `${BOT_BASE_NAME}_${globalBotCounter++}`; 
-    
-    io.emit('bot_log', `[RE-ROLL]: ${oldUsername} is replaced by ${newUsername}. Attempting join in 5s.`);
-    
-    const newBotConfig = {
-        username: newUsername, 
-        ...BOT_SERVER_CONFIG
-    };
-
-    // Wait 5 seconds before attempting to join to avoid immediate connection throttling
-    setTimeout(() => {
-        const newBotInstance = createBot(newBotConfig);
-        activeBots.push(newBotInstance);
-    }, 5000); 
-}
-// --- END RE-CREATION LOGIC ---
+// --- END BOT CREATION ---
 
 
-// --- INITIAL STARTUP ---
-// Start creating the initial set of bots
-for (let i = 1; i <= STARTING_BOT_COUNT; i++) {
-    const username = `${BOT_BASE_NAME}_${globalBotCounter++}`;
+// --- ♻️ RESPAWN LOGIC ---
+function respawnBot(oldName) {
+    const newName = `${BOT_BRAND_NAME}_${botCounter++}`;
+    io.emit('bot_log', `[${oldName}] ➜ Replaced by [${newName}] in 5s...`);
+
     const botConfig = {
-        username: username, 
-        ...BOT_SERVER_CONFIG
+        username: newName,
+        ...BOT_SERVER_SETTINGS
     };
-    const botInstance = createBot(botConfig);
-    activeBots.push(botInstance);
+
+    setTimeout(() => {
+        const botInstance = createAriSxZeBot(botConfig);
+        activeBots.push(botInstance);
+    }, 5000);
 }
+// --- END RESPAWN ---
 
 
-// --- SOCKET.IO FOR BOT CONTROL ---
+// --- 🚀 INITIAL BOT LAUNCH ---
+for (let i = 1; i <= INITIAL_BOT_COUNT; i++) {
+    const username = `${BOT_BRAND_NAME}_${botCounter++}`;
+    const config = {
+        username,
+        ...BOT_SERVER_SETTINGS
+    };
+    setTimeout(() => {
+        const bot = createAriSxZeBot(config);
+        activeBots.push(bot);
+    }, START_DELAY_MS * i);
+}
+// --- END INITIALIZATION ---
+
+
+// --- 💬 WEB SOCKET COMMAND INTERFACE ---
 io.on('connection', (socket) => {
-    console.log('A web client connected.')
-    
-    sendBotListUpdate(); // Send the initial list and counter immediately upon client connection
-    io.emit('bot_log', 'Web client connected. Bot list and ban count sent.');
+    console.log('🖥️ AriSxZe Web Client connected.');
+    updateClientBotList();
+    io.emit('bot_log', '🌐 Web client connected. Sending bot status...');
 
-    // LISTENER 1: CHAT COMMANDS
     socket.on('send_chat_command', ({ username, message }) => {
-        const bot = getBot(username);
+        const bot = findBot(username);
         if (bot && bot.chat) {
-            bot.chat(message)
-            io.emit('bot_log', `[${bot.username}]: Web command executed: CHAT "${message}"`)
+            bot.chat(message);
+            io.emit('bot_log', `[${bot.username}]: 💬 Sent chat: "${message}"`);
         } else {
-            io.emit('bot_log', `ERROR: Bot ${username} not found or ready to chat.`)
+            io.emit('bot_log', `⚠️ ERROR: Bot ${username} not found or inactive.`);
         }
-    })
-    
-    // LISTENER 2: MOVEMENT CONTROL COMMANDS
+    });
+
     socket.on('send_control_command', ({ username, control, state }) => {
-        const bot = getBot(username);
+        const bot = findBot(username);
         if (!bot || !bot.setControlState) {
-             io.emit('bot_log', `ERROR: Bot ${username} not found or ready for control commands.`)
-             return;
+            io.emit('bot_log', `⚠️ ERROR: Bot ${username} not found or unable to move.`);
+            return;
         }
-        
+
         if (bot.antiIdle.isActive() && control !== 'all') {
-            io.emit('bot_log', `[${bot.username}]: Manual control rejected: ${control}. Anti-Idle is running.`);
-            return; 
+            io.emit('bot_log', `[${bot.username}]: ⛔ Movement rejected: Anti-Idle running.`);
+            return;
         }
 
         if (control === 'all' && state === false) {
             bot.antiIdle.stop();
+            bot.clearControlStates?.();
+        } else {
+            bot.setControlState(control, state);
         }
-        
-        bot.setControlState(control, state)
-        io.emit('bot_log', `[${bot.username}]: Control executed: ${control} set to ${state}`)
-    })
-    
-    // LISTENER 3: ANTI-IDLE TOGGLE COMMAND
+
+        io.emit('bot_log', `[${bot.username}]: 🎮 Control: ${control} → ${state}`);
+    });
+
     socket.on('anti_idle_command', ({ username, state }) => {
-        const bot = getBot(username);
+        const bot = findBot(username);
         if (!bot) {
-            io.emit('bot_log', `ERROR: Bot ${username} not found.`);
+            io.emit('bot_log', `⚠️ ERROR: Bot ${username} not found.`);
             return;
         }
 
-        if (state === 'start') {
-            bot.antiIdle.stop();
-            bot.antiIdle.start();
-        } else if (state === 'stop') {
-            bot.antiIdle.stop();
-        }
-    })
+        if (state === 'start') bot.antiIdle.start();
+        else if (state === 'stop') bot.antiIdle.stop();
+    });
 
     socket.on('disconnect', () => {
-        console.log('A web client disconnected.')
-        io.emit('bot_log', 'Web client disconnected.')
-    })
-})
+        console.log('❎ Web client disconnected.');
+        io.emit('bot_log', '❎ Web client disconnected.');
+    });
+});
+// --- END SOCKET HANDLERS ---
+
+// ============================================================
+// 🟪 AriSxZe Bot by Arisxze - All Rights Reserved 2025
+// ============================================================
