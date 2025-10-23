@@ -7,8 +7,8 @@ const socketio = require('socket.io')
 const BOT_BASE_NAME = 'WaguriKaoruko';
 const STARTING_BOT_COUNT = 3; // The number of bots to start with, but not a limit.
 const BOT_SERVER_CONFIG = {
-    host: 'congratsngger.aternos.me', 
-    port: 14282, 
+    host: 'arisxze.aternos.me', 
+    port: 31729, 
     version: '1.16.5'
 };
 const PORT = process.env.PORT || 3000;
