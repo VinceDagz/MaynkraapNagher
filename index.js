@@ -14,12 +14,12 @@ const BOT_BRAND_NAME = 'AriSxZeBot';
 const CREATED_BY = 'Arisxze';
 const INITIAL_BOT_COUNT = 1;
 const BOT_SERVER_SETTINGS = {
-    host: '185.107.192.61', //SERVER HOSTNAME TO IP
-    port: 14282, //PORT OF THE SERVER IN ATERNOS
+    host: '139.99.123.168', //SERVER HOSTNAME TO IP
+    port: 40013, //PORT OF THE SERVER IN ATERNOS
     version: '1.16.5',
     protocolVersion: 754,
     // Important for Aternos or proxy-based setups
-    serverHost: 'congratsngger.aternos.me' //HOSTNAME OF THE ATERNOS SERVER
+    serverHost: 'node-sg-01.tickhosting.com' //HOSTNAME OF THE ATERNOS SERVER
 };
 const START_DELAY_MS = 3000;
 const PORT = process.env.PORT || 3000;
